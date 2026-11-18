@@ -69,13 +69,18 @@ export function Layout({ toggleTheme }: LayoutProps) {
   const navigate = useNavigate();
   const token = localStorage.getItem('@finman:token');
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     const refreshToken = localStorage.getItem('@finman:refreshToken')
-    api.post('auth/logout', {refreshToken: refreshToken})
-
-    localStorage.removeItem('@finman:token');
-    localStorage.removeItem('@finman:refreshToken');
-    navigate('/', { replace: true });
+    
+    try {
+      if(refreshToken) {
+        await api.post('auth/logout', {refreshToken: refreshToken})
+      }
+    } finally {
+      localStorage.removeItem('@finman:token');
+      localStorage.removeItem('@finman:refreshToken');
+      navigate('/', { replace: true });
+    }
   };
 
   return (

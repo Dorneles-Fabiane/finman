@@ -5,7 +5,7 @@ export const api = axios.create({
 })
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = localStorage.getItem('@FinMan:accessToken')
+  const token = localStorage.getItem('@finman:token')
 
   if(token) {
     config.headers.Authorization = `Bearer ${token}`
