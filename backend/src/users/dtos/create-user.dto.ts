@@ -11,7 +11,7 @@ export class CreateUserDto{
   @IsEmail({}, { message: 'Informe um e-mail válido'})
   email: string
 
-  @IsNotEmpty({ message: 'A senha é obrigatório'})
+  @IsNotEmpty({ message: 'A senha é obrigatória'})
   @IsString()
   @MinLength(6, {message: 'A senha deve ter no minimo 6 caracteres'})
   password: string

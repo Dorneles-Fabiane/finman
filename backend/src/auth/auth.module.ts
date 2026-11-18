@@ -11,7 +11,7 @@ import { AuthRepository } from "./auth.repository.js";
   imports: [
     UsersModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRECT || 'teste_key',
+      secret: process.env.JWT_SECRECT,
       signOptions: { expiresIn: '15m' }
     }),
     MongooseModule.forFeature([

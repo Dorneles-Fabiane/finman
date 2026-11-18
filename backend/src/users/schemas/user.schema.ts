@@ -12,7 +12,7 @@ export class UserSchemaClass {
   @Prop({ required: true, trim: true })
   name: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true })
   email: string;
 
   @Prop({ required: true })
@@ -25,17 +25,11 @@ export class UserSchemaClass {
   })
   role: UserRole;
 
-  @Prop({ required: true, index: true })
+  @Prop({ required: true })
   companyId: string;
 
   @Prop({ required: true, default: true })
   active: boolean;
-
-
 }
 
 export const UserSchema = SchemaFactory.createForClass(UserSchemaClass);
-
-// index pra performance
-// UserSchema.index({ email: 1 }, { unique: true });
-// UserSchema.index({ companyId: 1 });

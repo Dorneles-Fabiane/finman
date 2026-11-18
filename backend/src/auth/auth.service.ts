@@ -4,7 +4,6 @@ import { LoginDto } from "./dtos/login.dto.js";
 import * as bcrypt from "bcryptjs";
 import { UsersService } from "../users/users.service.js";
 import { AuthRepository } from "./auth.repository.js";
-import { Types } from "mongoose";
 
 @Injectable()
   export class AuthService {
@@ -32,7 +31,8 @@ import { Types } from "mongoose";
     });
 
     const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: '7d', 
+      secret: process.env.JWT_REFRESH_SECRET,
+      expiresIn: '2d', 
     });
 
     await this.saveRefreshToken(payload.sub, refreshToken )
@@ -49,7 +49,7 @@ import { Types } from "mongoose";
 
   async saveRefreshToken(userId: string, refreshToken: string) {
     const ttl = new Date();
-    ttl.setDate(ttl.getDate() + 7);
+    ttl.setDate(ttl.getDate() + 2);
 
     return this.authRepository.create(userId, refreshToken, ttl)
   }

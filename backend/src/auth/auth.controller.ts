@@ -2,7 +2,7 @@ import { Body, Controller, Post } from "@nestjs/common";
 import { AuthService } from "./auth.service.js";
 import { LoginDto } from "./dtos/login.dto.js";
 
-interface LogoutDodyDto {
+interface LogoutBodyDto {
   refreshToken: string
 }
 
@@ -16,7 +16,7 @@ export class AuthController {
   }
 
   @Post('logout')
-  async logout(@Body() body: LogoutDodyDto){
+  async logout(@Body() body: LogoutBodyDto){
     return await this.authService.logout(body.refreshToken)
   }
 }

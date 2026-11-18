@@ -1,5 +1,5 @@
 import { ConflictException, ForbiddenException, Inject, Injectable } from "@nestjs/common";
-import * as bycript from 'bcryptjs'
+import * as bcript from 'bcryptjs'
 import { USER_REPOSITORY, type IUserRepository } from "./repositories/users.repository.interface.js";
 import { User, UserRole } from "./entities/user.entity.js";
 import { CreateUserDto } from "./dtos/create-user.dto.js";
@@ -9,7 +9,7 @@ import { CreateUserDto } from "./dtos/create-user.dto.js";
 export class UsersService {
     constructor(
         @Inject(USER_REPOSITORY)
-        private readonly usersRespository: IUserRepository,
+        private readonly usersRepository: IUserRepository,
     ) {}
 
     async createTeamMember(dto: CreateUserDto, currentUser: User): Promise<Omit<User, 'passwordHash'>> {
@@ -19,14 +19,14 @@ export class UsersService {
             throw new ForbiddenException('Administradores só podem cadastrar Vendedores, Técnicos ou Faturamento');
         }
 
-       const existingUser = await this.usersRespository.findByEmail(dto.email)
+       const existingUser = await this.usersRepository.findByEmail(dto.email)
        if(existingUser) {
         throw new ConflictException('Email já cadastrado no sistema')
        }
 
-       const passwordHash = await bycript.hash(dto.password, 10)
+       const passwordHash = await bcript.hash(dto.password, 10)
 
-       const createdUser = await this.usersRespository.create({
+       const createdUser = await this.usersRepository.create({
         name: dto.name,
         email: dto.email,
         passwordHash,
@@ -40,7 +40,7 @@ export class UsersService {
     }
 
     async findByEmail (email: string) {
-        return await this.usersRespository.findByEmail(email)
+        return await this.usersRepository.findByEmail(email)
     }
 
 }
