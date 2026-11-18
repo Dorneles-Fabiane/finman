@@ -1,0 +1,60 @@
+import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { JwtService } from '@nestjs/jwt';
+import { LoginDto } from "./dtos/login.dto.js";
+import * as bcrypt from "bcryptjs";
+import { UsersService } from "../users/users.service.js";
+import { AuthRepository } from "./auth.repository.js";
+import { Types } from "mongoose";
+
+@Injectable()
+  export class AuthService {
+  constructor(
+    private jwtService: JwtService,
+    private readonly userService: UsersService,
+    private readonly authRepository: AuthRepository
+  ) {}
+
+  async login(dto: LoginDto) {
+    const user = await this.userService.findByEmail(dto.email);
+    if(!user) {
+      throw new UnauthorizedException('Email ou senha inválidos')
+    }
+
+    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash)
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Email ou senha inválidos')
+    }
+    //sub para padronização RFC 7519
+    const payload = { sub: user.id, email: user.email}
+    
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: '15m', 
+    });
+
+    const refreshToken = this.jwtService.sign(payload, {
+      expiresIn: '7d', 
+    });
+
+    await this.saveRefreshToken(payload.sub, refreshToken )
+
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+      }
+    }
+  }
+
+  async saveRefreshToken(userId: string, refreshToken: string) {
+    const ttl = new Date();
+    ttl.setDate(ttl.getDate() + 7);
+
+    return this.authRepository.create(userId, refreshToken, ttl)
+  }
+
+  async logout(refreshToken: string): Promise<void> {
+    return this.authRepository.deleteByRefreshToken(refreshToken)
+  }
+}
