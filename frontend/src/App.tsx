@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { ThemeProvider } from 'styled-components';
 import { themes, type ThemeName } from './styles/themes';
-import { GlobalStyle } from './styles/global'; // ajuste o caminho se necessário
-import { Home } from './pages/Home';
+import { GlobalStyle } from './styles/global';
+import { AppRoutes } from './routes';
 
 export default function App() {
   const [currentTheme, setCurrentTheme] = useState<ThemeName>('dark');
@@ -14,7 +14,7 @@ export default function App() {
   return (
     <ThemeProvider theme={themes[currentTheme]}>
       <GlobalStyle />
-      <Home toggleTheme={toggleTheme} />
+      <AppRoutes toggleTheme={toggleTheme} />
     </ThemeProvider>
   );
 }
