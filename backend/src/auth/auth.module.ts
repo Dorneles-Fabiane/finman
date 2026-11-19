@@ -4,8 +4,8 @@ import { MongooseModule } from "@nestjs/mongoose";
 import { AuthService } from "./auth.service.js";
 import { AuthController } from "./auth.controller.js";
 import { UsersModule } from "../users/users.module.js";
-import { RefreshTokenModelSchema, RefreshTokenSchema } from "./schemas/refresh-token.schema.js";
 import { AuthRepository } from "./auth.repository.js";
+import { RefreshTokenModel, RefreshTokenSchema } from "./models/refresh-token.model.js";
 
 @Module({
   imports: [
@@ -15,7 +15,7 @@ import { AuthRepository } from "./auth.repository.js";
       signOptions: { expiresIn: '15m' }
     }),
     MongooseModule.forFeature([
-      {name: RefreshTokenSchema.name, schema: RefreshTokenModelSchema}
+      {name: RefreshTokenModel.name, schema: RefreshTokenSchema}
     ])
   ],
   controllers: [AuthController],

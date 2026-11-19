@@ -1,9 +1,10 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from '@nestjs/jwt';
-import { LoginDto } from "./dtos/login.dto.js";
+import type { LoginDto } from "./schemas/login.schema.js";
 import * as bcrypt from "bcryptjs";
 import { UsersService } from "../users/users.service.js";
 import { AuthRepository } from "./auth.repository.js";
+import { createRefreshTokenSchema } from "./schemas/refresh-token.schema.js";
 
 @Injectable()
   export class AuthService {
@@ -51,10 +52,20 @@ import { AuthRepository } from "./auth.repository.js";
     const ttl = new Date();
     ttl.setDate(ttl.getDate() + 2);
 
-    return this.authRepository.create(userId, refreshToken, ttl)
+    const parsed = createRefreshTokenSchema.parse({
+      userId,
+      refreshToken,
+      ttl
+    })
+
+    return this.authRepository.create(
+      parsed.userId,
+      parsed.refreshToken,
+      parsed.ttl
+    )
   }
 
   async logout(refreshToken: string): Promise<void> {
-    return this.authRepository.deleteByRefreshToken(refreshToken)
+    await this.authRepository.deleteByRefreshToken(refreshToken)
   }
 }
