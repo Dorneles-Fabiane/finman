@@ -1,19 +1,9 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { HydratedDocument } from "mongoose";
-import { Types } from "mongoose";
+import * as z from 'zod';
 
-export type RefreshTokenDocument = HydratedDocument<RefreshTokenSchema>;
+export const createRefreshTokenSchema = z.object({
+  userId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'ID de usuário inválido'),
+  refreshToken: z.string().min(1, 'Refresh token é obrigatório'),
+  ttl: z.coerce.date(),
+});
 
-@Schema({collection: 'refresh-tokens', timestamps: true})
-export class RefreshTokenSchema {
-  @Prop({type: Types.ObjectId, ref: 'User', required: true})
-  userId: Types.ObjectId
-  
-  @Prop({required: true, unique: true})
-  refreshToken: string
-
-  @Prop({required: true})
-  ttl: Date
-}
-
-export const RefreshTokenModelSchema = SchemaFactory.createForClass(RefreshTokenSchema)
+export type CreateRefreshTokenDto = z.infer<typeof createRefreshTokenSchema>;

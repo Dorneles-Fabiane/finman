@@ -1,14 +1,14 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
 import { UserRole } from '../entities/user.entity.js';
+import { HydratedDocument } from 'mongoose';
 
-export type UserDocument = UserSchemaClass & Document & {
-  createdAt: Date;
-  updatedAt: Date;
+export type UserDocument = HydratedDocument<UserModel> & {
+  createdAt?: Date
+  updatedAt?: Date
 };
 
-@Schema({ timestamps: true, collection: 'users' })
-export class UserSchemaClass {
+@Schema({ collection: 'users', timestamps: true })
+export class UserModel {
   @Prop({ required: true, trim: true })
   name: string;
 
@@ -21,10 +21,10 @@ export class UserSchemaClass {
   @Prop({ 
     required: true,
     enum: UserRole,
-    default: UserRole.STORE
   })
   role: UserRole;
 
+  //Débito técnico - adicionar ref após criação da company
   @Prop({ required: true })
   companyId: string;
 
@@ -32,4 +32,4 @@ export class UserSchemaClass {
   active: boolean;
 }
 
-export const UserSchema = SchemaFactory.createForClass(UserSchemaClass);
+export const UserSchema = SchemaFactory.createForClass(UserModel);

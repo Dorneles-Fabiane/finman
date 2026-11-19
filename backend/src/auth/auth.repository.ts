@@ -1,30 +1,33 @@
-import { InjectModel } from "@nestjs/mongoose";
-import { RefreshTokenSchema } from "./schemas/refresh-token.schema.js";
-import { Injectable } from "@nestjs/common";
-import { Model, Types } from "mongoose";
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
+import {
+  RefreshTokenModel,
+  type RefreshTokenDocument,
+} from './models/refresh-token.model.js';
 
 @Injectable()
 export class AuthRepository {
   constructor(
-    @InjectModel(RefreshTokenSchema.name)
-    private readonly refreshTokenModel: Model<RefreshTokenSchema>
+    @InjectModel(RefreshTokenModel.name)
+    private readonly refreshTokenModel: Model<RefreshTokenDocument>,
   ) {}
 
   async create(userId: string, refreshToken: string, ttl: Date) {
     const userObjectId = new Types.ObjectId(userId);
 
-    await this.refreshTokenModel.create({
+    return this.refreshTokenModel.create({
       userId: userObjectId,
       refreshToken,
-      ttl
-    })
+      ttl,
+    });
   }
 
   async findByToken(refreshToken: string) {
-    await this.refreshTokenModel.findOne({refreshToken})
+    return this.refreshTokenModel.findOne({ refreshToken });
   }
 
   async deleteByRefreshToken(refreshToken: string) {
-    await this.refreshTokenModel.deleteOne({refreshToken: refreshToken})
+    return this.refreshTokenModel.deleteOne({ refreshToken });
   }
 }
