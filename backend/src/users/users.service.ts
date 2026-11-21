@@ -1,5 +1,5 @@
-import { ConflictException, ForbiddenException, Inject, Injectable } from "@nestjs/common";
-import * as bcript from 'bcryptjs'
+import { ConflictException, ForbiddenException, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import * as bcrypt from 'bcryptjs'
 import { USER_REPOSITORY, type IUserRepository } from "./repositories/users.repository.interface.js";
 import { User, UserRole } from "./entities/user.entity.js";
 import { CreateUserDto } from "./dtos/create-user.dto.js";
@@ -12,27 +12,48 @@ export class UsersService {
         private readonly usersRepository: IUserRepository,
     ) {}
 
-    async createTeamMember(dto: CreateUserDto, currentUser: User): Promise<Omit<User, 'passwordHash'>> {
-        const allowedRolesForAdmin = [UserRole.STORE, UserRole.TECHNICIAN, UserRole.BILLING];
+    async createTeamMember(dto: CreateUserDto, currentUserId: string): Promise<Omit<User, 'passwordHash'>> {
+        const currentUser = await this.usersRepository.findById(currentUserId);
 
-        if (currentUser.role == UserRole.ADMIN && !allowedRolesForAdmin.includes(dto.role)) {
-            throw new ForbiddenException('Administradores só podem cadastrar Vendedores, Técnicos ou Faturamento');
+        if (!currentUser) {
+            throw new NotFoundException('Usuário autenticado não encontrado');
         }
 
-       const existingUser = await this.usersRepository.findByEmail(dto.email)
-       if(existingUser) {
-        throw new ConflictException('Email já cadastrado no sistema')
-       }
+        const allowedActorRoles = [UserRole.ADMIN, UserRole.SUPER_ADMIN];
 
-       const passwordHash = await bcript.hash(dto.password, 10)
+        if (!allowedActorRoles.includes(currentUser.role)) {
+            throw new ForbiddenException(
+                'Apenas administradores podem cadastrar membros da equipe',
+            );
+        }
+
+        const allowedRolesForAdmin = [
+            UserRole.STORE,
+            UserRole.TECHNICIAN,
+            UserRole.BILLING,
+        ];
+
+        if (!allowedRolesForAdmin.includes(dto.role)) {
+            throw new ForbiddenException(
+                'Administradores só podem cadastrar Vendedores, Técnicos ou Faturamento',
+            );
+        }
+
+        const existingUser = await this.usersRepository.findByEmail(dto.email);
+        
+        if (existingUser) {
+            throw new ConflictException('Email já cadastrado no sistema');
+        }
+
+       const passwordHash = await bcrypt.hash(dto.password, 10);
 
        const createdUser = await this.usersRepository.create({
-        name: dto.name,
-        email: dto.email,
-        passwordHash,
-        role: dto.role,
-        companyId: currentUser.companyId,
-        active: true,
+            name: dto.name,
+            email: dto.email,
+            passwordHash,
+            role: dto.role,
+            companyId: currentUser.companyId,
+            active: true,
        });
 
        const { passwordHash: _, ...userWithoutPassword } = createdUser;
@@ -41,6 +62,10 @@ export class UsersService {
 
     async findByEmail (email: string) {
         return await this.usersRepository.findByEmail(email)
+    }
+
+    async findById (id: string) {
+        return await this.usersRepository.findById(id)
     }
 
 }

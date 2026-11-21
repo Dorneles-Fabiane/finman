@@ -24,8 +24,9 @@ import { createRefreshTokenSchema } from "./schemas/refresh-token.schema.js";
     if (!isPasswordValid) {
       throw new UnauthorizedException('Email ou senha inválidos')
     }
+    
     //sub para padronização RFC 7519
-    const payload = { sub: user.id, email: user.email}
+    const payload = { sub: user.id, email: user.email, role: user.role}
     
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: '15m', 
@@ -43,7 +44,7 @@ import { createRefreshTokenSchema } from "./schemas/refresh-token.schema.js";
       refreshToken,
       user: {
         id: user.id,
-        email: user.email,
+        email: user.email
       }
     }
   }

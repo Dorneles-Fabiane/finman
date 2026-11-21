@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 import { JwtModule } from "@nestjs/jwt";
 import { MongooseModule } from "@nestjs/mongoose";
 import { AuthService } from "./auth.service.js";
@@ -6,12 +6,13 @@ import { AuthController } from "./auth.controller.js";
 import { UsersModule } from "../users/users.module.js";
 import { AuthRepository } from "./auth.repository.js";
 import { RefreshTokenModel, RefreshTokenSchema } from "./models/refresh-token.model.js";
+import { JwtAuthGuard } from "./guards/jwt-auth.guard.js";
 
 @Module({
   imports: [
-    UsersModule,
+    forwardRef(() => UsersModule),
     JwtModule.register({
-      secret: process.env.JWT_SECRECT,
+      secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '15m' }
     }),
     MongooseModule.forFeature([
@@ -21,9 +22,13 @@ import { RefreshTokenModel, RefreshTokenSchema } from "./models/refresh-token.mo
   controllers: [AuthController],
   providers: [
     AuthService,
-    AuthRepository
+    AuthRepository,
+    JwtAuthGuard
   ],
-  exports: [AuthService]
+  exports: [
+    JwtModule,
+    JwtAuthGuard
+  ]
 })
 
 export class AuthModule {}
