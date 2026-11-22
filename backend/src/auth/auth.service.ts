@@ -5,6 +5,7 @@ import * as bcrypt from "bcryptjs";
 import { UsersService } from "../users/users.service.js";
 import { AuthRepository } from "./auth.repository.js";
 import { createRefreshTokenSchema } from "./schemas/refresh-token.schema.js";
+import { JwtPayload } from "./decorators/current-user.decorator.js";
 
 @Injectable()
   export class AuthService {
@@ -27,17 +28,10 @@ import { createRefreshTokenSchema } from "./schemas/refresh-token.schema.js";
     
     //sub para padronização RFC 7519
     const payload = { sub: user.id, email: user.email, role: user.role}
-    
-    const accessToken = this.jwtService.sign(payload, {
-      expiresIn: '15m', 
-    });
+  
+    const {accessToken, refreshToken} = await this.generateTokens(payload)
 
-    const refreshToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_REFRESH_SECRET,
-      expiresIn: '2d', 
-    });
-
-    await this.saveRefreshToken(payload.sub, refreshToken )
+    await this.saveRefreshToken(payload.sub, refreshToken)
 
     return {
       accessToken,
@@ -50,23 +44,76 @@ import { createRefreshTokenSchema } from "./schemas/refresh-token.schema.js";
   }
 
   async saveRefreshToken(userId: string, refreshToken: string) {
-    const ttl = new Date();
-    ttl.setDate(ttl.getDate() + 2);
+    const TWO_DAYS_IN_MS = 2 * 24 * 60 * 60 * 1000;
+
+    const expiresIn = new Date(Date.now() + TWO_DAYS_IN_MS)
 
     const parsed = createRefreshTokenSchema.parse({
       userId,
       refreshToken,
-      ttl
+      expiresIn
     })
 
-    return this.authRepository.create(
+    return this.authRepository.saveRefreshToken(
       parsed.userId,
       parsed.refreshToken,
-      parsed.ttl
+      parsed.expiresIn
     )
   }
 
   async logout(refreshToken: string): Promise<void> {
     await this.authRepository.deleteByRefreshToken(refreshToken)
   }
+
+  async refreshToken(refreshToken: string): Promise<{
+    accessToken: string;
+    refreshToken: string
+  }> {
+    const payload = await this.jwtService.verifyAsync<JwtPayload> (
+      refreshToken, {
+      secret: process.env.JWT_REFRESH_SECRET
+    })
+
+    const deletedToken = await this.authRepository.deleteByRefreshToken(refreshToken)
+    
+    if (!deletedToken || deletedToken.deletedCount === 0) {
+      throw new UnauthorizedException('O token fornecido não é válido!');
+    }
+
+    const user = await this.userService.findById(payload.sub)
+
+    if (!user) {
+      throw new UnauthorizedException('Usuário não encontrado ou inválido!');
+    }
+
+    const newPayload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role
+    }
+
+    const tokens = await this.generateTokens(newPayload)
+
+    await this.saveRefreshToken(user.id, tokens.refreshToken)
+
+    return tokens;
+  }
+
+  private async generateTokens(payload: JwtPayload): Promise<{
+    accessToken: string;
+    refreshToken: string
+  }> {
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(payload, {
+      expiresIn: '15m', 
+      }),
+
+      this.jwtService.signAsync(payload, {
+        secret: process.env.JWT_REFRESH_SECRET,
+        expiresIn: '2d', 
+      })
+    ])
+
+    return {accessToken, refreshToken}
+  } 
 }

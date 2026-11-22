@@ -13,13 +13,13 @@ export class AuthRepository {
     private readonly refreshTokenModel: Model<RefreshTokenDocument>,
   ) {}
 
-  async create(userId: string, refreshToken: string, ttl: Date) {
+  async saveRefreshToken(userId: string, refreshToken: string, expiresIn: Date) {
     const userObjectId = new Types.ObjectId(userId);
 
     return this.refreshTokenModel.create({
       userId: userObjectId,
       refreshToken,
-      ttl,
+      expiresIn
     });
   }
 
