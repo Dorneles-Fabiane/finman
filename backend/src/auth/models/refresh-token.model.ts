@@ -12,8 +12,8 @@ export class RefreshTokenModel {
   @Prop({required: true, unique: true})
   refreshToken: string
 
-  @Prop({required: true})
-  ttl: Date
+  @Prop({required: true, expires: 0})
+  expiresIn: Date
 }
 
 export const RefreshTokenSchema = SchemaFactory.createForClass(RefreshTokenModel)
