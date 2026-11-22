@@ -38,7 +38,8 @@ import { JwtPayload } from "./decorators/current-user.decorator.js";
       refreshToken,
       user: {
         id: user.id,
-        email: user.email
+        email: user.email,
+        role: user.role
       }
     }
   }

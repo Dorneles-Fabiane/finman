@@ -1,9 +1,10 @@
 import { createParamDecorator, ExecutionContext } from "@nestjs/common"
+import { UserRole } from "../../users/entities/user.entity.js"
 
 export interface JwtPayload {
   sub: string
   email: string,
-  role: string
+  role: UserRole
 }
 
 export const CurrentUser = createParamDecorator(
