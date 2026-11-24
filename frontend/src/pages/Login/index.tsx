@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { api } from '../../services/api';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/authContext';
+import { Navigate } from 'react-router-dom';
 
 const Container = styled.div`
   background-color: ${({ theme }) => theme.colors.background};
@@ -94,69 +94,71 @@ const ErrorMessage = styled.p`
 `;
 
 export function Login() {
+  const { login, isLoading, isAuthenticated } = useAuth()
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const navigate = useNavigate()
+
+  if (isAuthenticated) {
+    return <Navigate to="/home" replace />
+  }
 
   async function handleLogin(e: React.SyntheticEvent) {
     e.preventDefault()
     setError('')
 
     try {
-      const response = await api.post('auth/login', {
-        email,
-        password
-      })
-
-      const { accessToken, refreshToken } = response.data
-
-      localStorage.setItem('@finman:token', accessToken);
-
-      if(refreshToken) {
-        localStorage.setItem('@finman:refreshToken', refreshToken)
-      }
-
-      navigate('/home', {replace: true})
+      await login({ email, password })
     } catch (err: any) {
       console.error(err)
-      const message = err.response?.data?.message || 'Erro ao conectar com o servidor.';
-      setError(Array.isArray(message) ? message[0] : message);
-    }
+      const message = err.response?.data?.message || 'Erro ao conectar com o servidor.'
+      setError(Array.isArray(message) ? message[0] : message)
+      }
   }
 
   return (
-    <Container>
-      <MainContent>
-        <LoginCard onSubmit={handleLogin}>
-          <Title>Acesso Administrativo</Title>
-          
-          <InputGroup>
-            <label>E-mail</label>
-            <input 
-             type="email" 
-             placeholder="admin@finman.com"
-             value={email}
-             onChange={(e) => setEmail(e.target.value)}
-             required
-            />
-          </InputGroup>
+    <div>
+      {isLoading ? (
+        <Container>
+          <MainContent>
+            <Title style={{marginTop: '5rem'}}>Carregando...</Title>  
+          </MainContent>
+      </Container>
+      ) : (
+        <Container>
+          <MainContent>
+            <LoginCard onSubmit={handleLogin}>
+              <Title>Acesso Administrativo</Title>
+              
+              <InputGroup>
+                <label>E-mail</label>
+                <input 
+                  type="email" 
+                  placeholder="admin@finman.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </InputGroup>
 
-          <InputGroup>
-            <label>Senha</label>
-            <input 
-             type="password" 
-             placeholder="••••••••" 
-             value={password}
-             onChange={(e) => setPassword(e.target.value)}
-            />
-          </InputGroup>
+              <InputGroup>
+                <label>Senha</label>
+                <input 
+                  type="password" 
+                  placeholder="••••••••" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </InputGroup>
 
-          {error && <ErrorMessage>{error}</ErrorMessage>}
+              {error && <ErrorMessage>{error}</ErrorMessage>}
 
-          <SubmitButton type="submit">Entrar</SubmitButton>
-        </LoginCard>
-      </MainContent>
-    </Container>
-  );
+              <SubmitButton type="submit">Entrar</SubmitButton>
+            </LoginCard>
+          </MainContent>
+        </Container>
+      )}
+    </div>
+  )
 }

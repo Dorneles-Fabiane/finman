@@ -1,6 +1,6 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { api } from '../../services/api';
+import { useAuth } from '../../contexts/authContext';
 
 const Container = styled.div`
   display: flex;
@@ -66,22 +66,11 @@ interface LayoutProps {
 }
 
 export function Layout({ toggleTheme }: LayoutProps) {
-  const navigate = useNavigate();
-  const token = localStorage.getItem('@finman:token');
+  const { isAuthenticated, logout } = useAuth()
 
   const handleLogout = async () => {
-    const refreshToken = localStorage.getItem('@finman:refreshToken')
-    
-    try {
-      if(refreshToken) {
-        await api.post('auth/logout', {refreshToken: refreshToken})
-      }
-    } finally {
-      localStorage.removeItem('@finman:token');
-      localStorage.removeItem('@finman:refreshToken');
-      navigate('/', { replace: true });
-    }
-  };
+    await logout()
+  }
 
   return (
     <Container>
@@ -90,14 +79,13 @@ export function Layout({ toggleTheme }: LayoutProps) {
         
         <Actions>
           <Button onClick={toggleTheme}>Alternar Tema</Button>
-          
-          {token && (
+
+          { isAuthenticated && (
             <LogoutButton onClick={handleLogout}>Sair</LogoutButton>
           )}
         </Actions>
       </Header>
 
-      {/* O Outlet injeta a página atual (Login ou Home) mantendo o Header fixo */}
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <Outlet />
       </main>
