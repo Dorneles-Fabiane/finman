@@ -1,6 +1,30 @@
-import styled from 'styled-components';
+import { useState } from "react"
+import { api } from "../../services/api"
 
-//menu pra cadastro de usuários do sistema 
 export function Dashboard() {
-  return <h1>Teste</h1>
+  const [meResponse, setMeResponse] = useState<unknown>(null)
+  const [meError, setMeError] = useState<string>('')
+
+  async function handleCallMe() {
+    setMeError('')
+
+    try {
+      const { data } = await api.get('/users/me')
+      setMeResponse(data)
+    } catch (err: any) {
+      console.error(err)
+      setMeError(err.response?.data?.message || 'Erro ao chamar /users/me')
+    }
+  }
+
+  return (
+    <>
+    <button type="button" onClick={handleCallMe}>
+      Testar /users/me
+    </button>
+
+    {meError && <p>{meError}</p>}
+    {meResponse && <pre>{JSON.stringify(meResponse, null, 2)}</pre>}
+    </>
+  )
 }
